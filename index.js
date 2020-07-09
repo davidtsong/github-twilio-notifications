@@ -1,8 +1,6 @@
 
 const crypto = require('crypto')
 
-let jsonHeaders = new Headers([["Content-Type", "application/json"]])
-
 async function sendText(message){
   let headers = new Headers();
   headers.append("Authorization","Basic " + Buffer.from(accountSid + ":" + authToken).toString('base64'))
@@ -41,10 +39,6 @@ async function checkSignature(request) {
   return expectedSignature === actualSignature
 }
 
-addEventListener("fetch", event => {
-  event.respondWith(githubWebhookHandler(event.request))
-})
-
 function simpleResponse(statusCode, message) {
   let resp = {
     message: message,
@@ -52,10 +46,14 @@ function simpleResponse(statusCode, message) {
   }
 
   return new Response(JSON.stringify(resp), {
-    headers: jsonHeaders,
+    headers: new Headers([["Content-Type", "application/json"]]),
     status: statusCode
   })
 }
+
+addEventListener("fetch", event => {
+  event.respondWith(githubWebhookHandler(event.request))
+})
 
 async function githubWebhookHandler(request) {
   if (request.method !== "POST") {
@@ -65,14 +63,14 @@ async function githubWebhookHandler(request) {
     )
   }
   try {
+    if (!checkSignature(request)) {
+      return simpleResponse(403, "Incorrect Secret Code")
+    }
+
     const formData = await request.json()
     const repo_name = formData.repository.full_name
     const action = await request.headers.get("X-GitHub-Event")
     const sender_name = formData.sender.login
-
-    if (!checkSignature(request)) {
-      return simpleResponse(403, "Incorrect Secret Code")
-    }
     
     return await sendText(`${sender_name} performed ${action} on ${repo_name}`)
 
