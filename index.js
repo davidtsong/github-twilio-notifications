@@ -2,22 +2,22 @@
 const crypto = require('crypto')
 
 async function sendText(message){
-  let headers = {
-    "Authorization": `Basic ${ACCOUNT_SID}:${AUTH_TOKEN}`,
-    "Content-Type": "application/x-www-form-urlencoded"
-  }
-
   const endpoint = "https://api.twilio.com/2010-04-01/Accounts/" + ACCOUNT_SID + "/Messages.json"
 
   let encoded = new URLSearchParams()
   encoded.append("To", RECIPIENT)
   encoded.append("From", '+19388887573')
   encoded.append("Body", message)
+  
+  let token = btoa(ACCOUNT_SID + ":" + AUTH_TOKEN)
 
   const request = {
     body: encoded,
     method: 'POST',
-    headers: headers
+    headers: {
+      "Authorization": `Basic ${token}`,
+      "Content-Type": "application/x-www-form-urlencoded"
+    }
   }
 
   let result = await fetch(endpoint, request)
@@ -33,9 +33,9 @@ async function createHexSignature(requestBody) {
   return hmac.digest('hex')
 }
 
-async function checkSignature(request) {
-  let expectedSignature = await createHexSignature(await request.text())
-  let actualSignature = request.headers.get("X-Hub-Signature")
+async function checkSignature(formData, headers) {
+  let expectedSignature = await createHexSignature(formData)
+  let actualSignature = headers.get("X-Hub-Signature")
 
   return expectedSignature === actualSignature
 }
@@ -64,14 +64,17 @@ async function githubWebhookHandler(request) {
     )
   }
   try {
-    if (!checkSignature(request)) {
+    const formData = await request.json()
+    const headers = await request.headers
+    const action = headers.get("X-GitHub-Event")
+    const repo_name = formData.repository.full_name
+    const sender_name = formData.sender.login 
+
+    if (!checkSignature(formData, headers)) {
       return simpleResponse(403, "Incorrect Secret Code")
     }
+    
 
-    const formData = await request.json()
-    const repo_name = formData.repository.full_name
-    const action = request.headers.get("X-GitHub-Event")
-    const sender_name = formData.sender.login
     
     return await sendText(`${sender_name} performed ${action} on ${repo_name}`)
 
