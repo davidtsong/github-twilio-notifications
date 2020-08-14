@@ -1,4 +1,3 @@
-
 const crypto = require('crypto')
 
 async function sendText(message){
@@ -71,12 +70,12 @@ async function githubWebhookHandler(request) {
     const sender_name = formData.sender.login 
 
     if (!checkSignature(formData, headers)) {
-      return simpleResponse(403, "Incorrect Secret Code")
+      return simpleResponse(403, "Wrong password, try again :P")
     }
     
 
     
-    return await sendText(`${sender_name} performed ${action} on ${repo_name}`)
+    return await sendText(`${sender_name} casted spell: ${action} onto your repo ${repo_name}`)
 
   } catch (e) {
     return simpleResponse(
