@@ -2,14 +2,15 @@
 const crypto = require('crypto')
 
 async function sendText(message){
-  let headers = new Headers();
-  headers.append("Authorization","Basic " + Buffer.from(accountSid + ":" + authToken).toString('base64'))
-  headers.append("Content-Type", "application/x-www-form-urlencoded")
+  let headers = {
+    "Authorization": `Basic ${ACCOUNT_SID}:${AUTH_TOKEN}`,
+    "Content-Type": "application/x-www-form-urlencoded"
+  }
 
-  const endpoint = "https://api.twilio.com/2010-04-01/Accounts/" + accountSid + "/Messages.json"
+  const endpoint = "https://api.twilio.com/2010-04-01/Accounts/" + ACCOUNT_SID + "/Messages.json"
 
   let encoded = new URLSearchParams()
-  encoded.append("To",recipient)
+  encoded.append("To", RECIPIENT)
   encoded.append("From", '+19388887573')
   encoded.append("Body", message)
 
@@ -34,7 +35,7 @@ async function createHexSignature(requestBody) {
 
 async function checkSignature(request) {
   let expectedSignature = await createHexSignature(await request.text())
-  let actualSignature = await request.headers.get("X-Hub-Signature")
+  let actualSignature = request.headers.get("X-Hub-Signature")
 
   return expectedSignature === actualSignature
 }
@@ -69,7 +70,7 @@ async function githubWebhookHandler(request) {
 
     const formData = await request.json()
     const repo_name = formData.repository.full_name
-    const action = await request.headers.get("X-GitHub-Event")
+    const action = request.headers.get("X-GitHub-Event")
     const sender_name = formData.sender.login
     
     return await sendText(`${sender_name} performed ${action} on ${repo_name}`)
