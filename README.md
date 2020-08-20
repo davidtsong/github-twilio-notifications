@@ -1,15 +1,6 @@
-# 👷 `worker-template` Hello World
+# Github SMS notifications using Twilio
 
-A template for kick starting a Cloudflare worker project.
+Whenever there is new activity on your GitHub repo, your worker will send you a text using Twilio.
 
-[`index.js`](https://github.com/cloudflare/worker-template/blob/master/index.js) is the content of the Workers script.
 
-#### Wrangler
-
-To generate using [wrangler](https://github.com/cloudflare/wrangler)
-
-```
-wrangler generate projectname https://github.com/cloudflare/worker-template
-```
-
-Further documentation for Wrangler can be found [here](https://developers.cloudflare.com/workers/tooling/wrangler).
+This repo serves as example code for the [tutorial on the Worker Docs](http://developers.cloudflare.com/workers/tutorials/github-sms-notifications-using-twilio) website.
